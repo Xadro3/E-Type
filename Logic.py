@@ -119,15 +119,15 @@ def game():
             if enter == False:
                 break
 
-        pygame.draw.rect(screen, (40, 100, 255), (0, 0, 480, 20))
+        pygame.draw.rect(screen, (40, 100, 255), (0, 0, 480, 40))
         words = font.render(newWord, False, 120, (40, 100, 255))  # scoreboard, input, output rendern
         scorerender = font.render(str(score), False, 120, (40, 100, 255))
         inputrender = font.render(inputbox, False, 120, (40, 100, 255))
         liverender = font.render(str(healthpoints), False, 120, (40, 100, 255))
-        Figurines.draw(screen, 0, 0, words)
-        Figurines.draw(screen, 0, 462, scorerender)
-        Figurines.draw(screen, 460, 0, liverender)
-        Figurines.draw(screen, 0, 20, inputrender)
+        Figurines.draw(screen, 3, 3, words)
+        Figurines.draw(screen, 440, 3, scorerender)
+        Figurines.draw(screen, 1, 454, liverender)
+        Figurines.draw(screen, 0, 40, inputrender)
 
         for event in pygame.event.get():  # Event abfrage,
 
@@ -140,7 +140,7 @@ def game():
 
                 elif event.key == pygame.K_BACKSPACE and len(inputbox) != 0:
 
-                    inputbox = inputbox[0:-1]
+                    inputbox = ""
 
                 else:
                     inputbox += event.unicode
