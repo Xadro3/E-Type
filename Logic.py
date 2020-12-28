@@ -24,6 +24,7 @@ def giveWord(rng):
 
 def game():
     pygame.init()
+    pygame.mixer.init()
     screen = pygame.display.set_mode((480, 480))
     pygame.display.set_caption("E-Type")
     pygame.display.set_icon(Figurines.loadImage("./Assets/Spaceship.png", (255, 255, 255)))
@@ -45,6 +46,13 @@ def game():
     bullets = []
     selectedEnemy = enemies[1]
     flyingShot = 0
+
+    pygame.mixer.music.load("./Assets/sounds/loop.mp3")
+    pygame.mixer.music.set_volume(0.1)
+    pygame.mixer.music.play(-1)
+    hit= pygame.mixer.Sound("./Assets/sounds/xplod.wav")
+    shot= pygame.mixer.Sound("./Assets/sounds/laser.wav")
+    input = pygame.mixer.Sound("./Assets/sounds/input.wav")
 
     running = True
     while running:
@@ -78,6 +86,8 @@ def game():
                 spawnrate += 1
                 selectedEnemy.yPos = 0
                 score += 10
+                pygame.mixer.Sound.play(hit)
+
                 if spawnrate % 5 == 1:
                     enemies.append(Figurines.Enemy(random.randrange(0, 440, 5), 0))
 
@@ -87,12 +97,14 @@ def game():
 
             if enemies[d].yPos == player.yPos and enemies[d].xPos == player.xPos:
                 healthpoints -= 1
+                pygame.mixer.Sound.play(hit)
                 if healthpoints == -1:
                     healthpoints = 3
                     screen.blit(Figurines.loadImage("./Assets/spacebg.png"), (0, 0))
                     loseText = font.render("You Lose, Press enter To play", False, (40, 100, 255))
                     screen.blit(loseText, (5, 240))
                     pygame.display.flip()
+                    pygame.mixer.pause()
                     while enter:
                         for event in pygame.event.get():
                             if event.type == pygame.QUIT:
@@ -112,6 +124,7 @@ def game():
                                     newWord = "resume"
                                     score = 0
                                     bullets.clear()
+                                    pygame.mixer.unpause()
                                     enter = False
                                     break
 
@@ -143,10 +156,12 @@ def game():
                     inputbox = ""
 
                 else:
+                    pygame.mixer.Sound.play(input)
                     inputbox += event.unicode
 
         if inputbox == newWord:
             if flyingShot != 1 and player.xPos == selectedEnemy.xPos:
+                pygame.mixer.Sound.play(shot)
                 bullets.append(Figurines.Boolet(player.xPos, player.yPos))
                 flyingShot = 1
                 newWord = (giveWord(random.randrange(0, 370100)))
