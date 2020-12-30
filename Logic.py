@@ -8,7 +8,7 @@ import random
 import pygame
 
 import Figurines
-import game_state
+import Game_state
 
 
 def giveWord(rng, gamestate):
@@ -145,7 +145,7 @@ def restofthelogic(gamestate, screen):
 
 
 def game():
-    gamestate = game_state.GameState
+    gamestate = Game_state.GameState
 
     pygame.mixer.music.load("./Assets/sounds/loop.mp3")
     pygame.mixer.music.set_volume(0.01)
