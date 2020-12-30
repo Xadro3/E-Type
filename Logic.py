@@ -42,13 +42,13 @@ def game():
 
     enemies = [Figurines.Enemy(random.randrange(0, 440, 5), random.randrange(0, 20)),
                Figurines.Enemy(random.randrange(0, 440, 5), random.randrange(0, 20))]
-    player = Figurines.Player(320, 448)
+    player = Figurines.Player(240, 448)
     bullets = []
     selectedEnemy = enemies[1]
     flyingShot = 0
 
     pygame.mixer.music.load("./Assets/sounds/loop.mp3")
-    pygame.mixer.music.set_volume(0.1)
+    pygame.mixer.music.set_volume(0.01)
     pygame.mixer.music.play(-1)
     hit= pygame.mixer.Sound("./Assets/sounds/xplod.wav")
     shot= pygame.mixer.Sound("./Assets/sounds/laser.wav")
@@ -62,17 +62,17 @@ def game():
         screen.blit(bg, (0, 0))
 
         for d in enemies:
-            d.moveDown(screen)
+            d.movingDown(screen)
 
         for enemy in enemies:  # Niedrigsten gegner finden
             if enemy.yPos >= selectedEnemy.yPos:
                 selectedEnemy = enemy
 
         if player.xPos > selectedEnemy.xPos:  # Niedrigster gegner in shussbahn bringen
-            player.moveLeft(screen)
+            player.movingLeft(screen)
 
         elif player.xPos < selectedEnemy.xPos:
-            player.moveRight(screen)
+            player.movingRight(screen)
 
         else:
             player.idle(screen)
@@ -89,9 +89,9 @@ def game():
                 pygame.mixer.Sound.play(hit)
 
                 if spawnrate % 5 == 1:
-                    enemies.append(Figurines.Enemy(random.randrange(0, 440, 5), 0))
+                    enemies.append(Figurines.Enemy(random.randrange(0, 440, 5), random.randrange(0, 440, 5)))
 
-        i = len(enemies)  # Game-Overscreen
+        i = len(enemies)  # Game-Over screen
         enter = True
         for d in range(i):
 
@@ -137,10 +137,10 @@ def game():
         scorerender = font.render(str(score), False, 120, (40, 100, 255))
         inputrender = font.render(inputbox, False, 120, (40, 100, 255))
         liverender = font.render(str(healthpoints), False, 120, (40, 100, 255))
-        Figurines.draw(screen, 3, 3, words)
-        Figurines.draw(screen, 440, 3, scorerender)
-        Figurines.draw(screen, 1, 454, liverender)
-        Figurines.draw(screen, 0, 40, inputrender)
+        screen.blit(words, (3,3))
+        screen.blit(scorerender,(440,3))
+        screen.blit(liverender,(1,454))
+        screen.blit(inputrender,(0,40))
 
         for event in pygame.event.get():  # Event abfrage,
 
