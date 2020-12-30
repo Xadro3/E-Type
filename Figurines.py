@@ -77,7 +77,7 @@ class Sprite():
 
 class Enemy(Sprite):
     def __init__(self, xPos, yPos):
-        super(Enemy, self).__init__(xPos, yPos, 2, )
+        super(Enemy, self).__init__(xPos, yPos, 1, )
 
         self.xPos = xPos
         self.yPos = yPos
@@ -132,7 +132,7 @@ class Boolet(Sprite):
 
         self.kaboom = kaboom
         self.flying = flying
-        self.xPos = xPos
+        self.xPos = xPos+12
         self.yPos = yPos
         self.cycle = 0
 

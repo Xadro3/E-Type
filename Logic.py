@@ -8,164 +8,167 @@ import random
 import pygame
 
 import Figurines
-
-with open(
-        "./Assets/oxford.txt") as word_file:  # Wir suchen uns auf basis eines zufallsgenerators ein wort aus unserer liste
-    data = list(word_file.read().split())
+import game_state
 
 
-def giveWord(rng):
+def giveWord(rng, gamestate):
     global data  # Um die performance zu verbessern benutzen wir data als globale variable die immer im speicher geladen ist
 
-    word = data[rng]
+    word = gamestate.data[rng]
 
     return word
 
 
+def hit(gamestate, screen):
+    gs = gamestate
+
+    if gs.flyingShot == 1:  # Checken ob wir eine kugel in der luft haben und hit-abfrage
+        gs.bullets[0].shot(screen)
+        if gs.bullets[0].yPos - gs.selectedEnemy.yPos < 5:
+            gs.flyingShot = 0
+            gs.bullets[0].bulletHIT(screen)
+            gs.bullets.remove(gs.bullets[0])
+            gs.spawnrate += 1
+            gs.selectedEnemy.yPos = 0
+            gs.score += 10
+            pygame.mixer.Sound.play(gs.hitsound)
+
+            if gs.spawnrate % 5 == 1:
+                gs.enemies.append(Figurines.Enemy(random.randrange(0, 440, 5), random.randrange(0, 440, 5)))
+
+
+def findEnemy(gamestate, screen):
+    gs = gamestate
+
+    for enemy in gs.enemies:  # Niedrigsten gegner finden
+        if enemy.yPos >= gs.selectedEnemy.yPos:
+            gs.selectedEnemy = enemy
+
+    if gs.player.xPos > gs.selectedEnemy.xPos:  # Niedrigster gegner in shussbahn bringen
+        gs.player.movingLeft(screen)
+
+    elif gs.player.xPos < gs.selectedEnemy.xPos:
+        gs.player.movingRight(screen)
+
+    else:
+        gs.player.idle(screen)
+
+
+def lives(gamestate, screen):
+    gs = gamestate
+
+    i = len(gamestate.enemies)
+    enter = True
+
+    for d in range(i):
+        if gs.enemies[d].yPos == gs.player.yPos and gs.enemies[d].xPos == gs.player.xPos:
+            gs.healthpoints -= 1
+            pygame.mixer.Sound.play(gs.hitsound)
+            if gs.healthpoints == -1:  # Game-Over screen
+                gs.healthpoints = 3
+                screen.blit(Figurines.loadImage("./Assets/spacebg.png"), (0, 0))
+                loseText = gs.font.render("You Lose, Press enter To play", False, (40, 100, 255))
+                screen.blit(loseText, (5, 240))
+                pygame.display.flip()
+                pygame.mixer.pause()
+
+
+                while enter:
+                    for event in pygame.event.get():
+                        if event.type == pygame.QUIT:
+                            gs.running = False
+                            enter = False
+                            break
+
+                        if event.type == pygame.KEYDOWN:  # Vorbereitung auf neue runde
+                            if event.key == pygame.K_RETURN:
+                                gs.running = True
+                                gs.enemies.clear()
+                                gs.enemies = [Figurines.Enemy(random.randrange(0, 440, 5), random.randrange(0, 20)),
+                                              Figurines.Enemy(random.randrange(0, 440, 5), random.randrange(0, 20))]
+                                gs.selectedEnemy = gs.enemies[1]
+                                gs.flyingShot = 0
+                                gs.inputbox = ""
+                                gs.newWord = "resume"
+                                gs.score = 0
+                                gs.bullets.clear()
+                                pygame.mixer.unpause()
+                                enter = False
+                                break
+
+            gs.clock.tick(60)
+        if enter == False:
+            break
+
+
+def userInterface(gamestate, screen):
+    gs = gamestate
+
+    pygame.draw.rect(screen, (40, 100, 255), (0, 0, 480, 40))
+    words = gs.font.render(gs.newWord, False, 120, (40, 100, 255))  # scoreboard, input, output rendern
+    scorerender = gs.font.render(str(gs.score), False, 120, (40, 100, 255))
+    inputrender = gs.font.render(gs.inputbox, False, 120, (40, 100, 255))
+    liverender = gs.font.render(str(gs.healthpoints), False, 120, (40, 100, 255))
+    screen.blit(words, (3, 3))
+    screen.blit(scorerender, (440, 3))
+    screen.blit(liverender, (1, 454))
+    screen.blit(inputrender, (0, 40))
+
+
+def restofthelogic(gamestate, screen):
+    gs = gamestate
+
+    for event in pygame.event.get():  # Event abfrage,
+
+        if event.type == pygame.QUIT:
+            gs.running = False
+
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                pygame.event.post(pygame.event.Event(pygame.QUIT))
+
+            elif event.key == pygame.K_BACKSPACE and len(gs.inputbox) != 0:
+
+                gs.inputbox = ""
+
+            else:
+                pygame.mixer.Sound.play(gs.input)
+                gs.inputbox += event.unicode
+
+    if gs.inputbox == gs.newWord:
+        if gs.flyingShot != 1 and gs.player.xPos == gs.selectedEnemy.xPos:
+            pygame.mixer.Sound.play(gs.shot)
+            gs.bullets.append(Figurines.Boolet(gs.player.xPos, gs.player.yPos))
+            gs.flyingShot = 1
+            gs.newWord = (giveWord(random.randrange(0, 370100), gamestate))
+            gs.inputbox = ""
+
+
 def game():
-    pygame.init()
-    pygame.mixer.init()
-    screen = pygame.display.set_mode((480, 480))
-    pygame.display.set_caption("E-Type")
-    pygame.display.set_icon(Figurines.loadImage("./Assets/Spaceship.png", (255, 255, 255)))
-    pygame.mouse.set_visible(True)
-    random.seed()
-    healthpoints = 3
-    score = 0
-    spawnrate = 0
-    newWord = "start"
-    font = pygame.font.Font("./Assets/font/font.TTF", 20)
-    inputbox = ""
-
-    clock = pygame.time.Clock()
-    bg = Figurines.loadImage("./Assets/spacebg.png")
-
-    enemies = [Figurines.Enemy(random.randrange(0, 440, 5), random.randrange(0, 20)),
-               Figurines.Enemy(random.randrange(0, 440, 5), random.randrange(0, 20))]
-    player = Figurines.Player(240, 448)
-    bullets = []
-    selectedEnemy = enemies[1]
-    flyingShot = 0
+    gamestate = game_state.GameState
 
     pygame.mixer.music.load("./Assets/sounds/loop.mp3")
     pygame.mixer.music.set_volume(0.01)
     pygame.mixer.music.play(-1)
-    hit= pygame.mixer.Sound("./Assets/sounds/xplod.wav")
-    shot= pygame.mixer.Sound("./Assets/sounds/laser.wav")
-    input = pygame.mixer.Sound("./Assets/sounds/input.wav")
+    screen = gamestate.screen
 
-    running = True
-    while running:
-        clock.tick(45)
+    # gameloop
+
+    while gamestate.running:
+
+        gamestate.clock.tick(45)
 
         screen.fill((255, 255, 255))
-        screen.blit(bg, (0, 0))
+        screen.blit(gamestate.bg, (0, 0))
 
-        for d in enemies:
+        for d in gamestate.enemies:
             d.movingDown(screen)
 
-        for enemy in enemies:  # Niedrigsten gegner finden
-            if enemy.yPos >= selectedEnemy.yPos:
-                selectedEnemy = enemy
-
-        if player.xPos > selectedEnemy.xPos:  # Niedrigster gegner in shussbahn bringen
-            player.movingLeft(screen)
-
-        elif player.xPos < selectedEnemy.xPos:
-            player.movingRight(screen)
-
-        else:
-            player.idle(screen)
-
-        if flyingShot == 1:  # Checken ob wir eine kugel in der luft haben und hit-abfrage
-            bullets[0].shot(screen)
-            if bullets[0].yPos - selectedEnemy.yPos < 5:
-                flyingShot = 0
-                bullets[0].bulletHIT(screen)
-                bullets.remove(bullets[0])
-                spawnrate += 1
-                selectedEnemy.yPos = 0
-                score += 10
-                pygame.mixer.Sound.play(hit)
-
-                if spawnrate % 5 == 1:
-                    enemies.append(Figurines.Enemy(random.randrange(0, 440, 5), random.randrange(0, 440, 5)))
-
-        i = len(enemies)  # Game-Over screen
-        enter = True
-        for d in range(i):
-
-            if enemies[d].yPos == player.yPos and enemies[d].xPos == player.xPos:
-                healthpoints -= 1
-                pygame.mixer.Sound.play(hit)
-                if healthpoints == -1:
-                    healthpoints = 3
-                    screen.blit(Figurines.loadImage("./Assets/spacebg.png"), (0, 0))
-                    loseText = font.render("You Lose, Press enter To play", False, (40, 100, 255))
-                    screen.blit(loseText, (5, 240))
-                    pygame.display.flip()
-                    pygame.mixer.pause()
-                    while enter:
-                        for event in pygame.event.get():
-                            if event.type == pygame.QUIT:
-                                running = False
-                                enter = False
-                                break
-
-                            if event.type == pygame.KEYDOWN:  # Vorbereitung auf neue runde
-                                if event.key == pygame.K_RETURN:
-                                    running = True
-                                    enemies.clear()
-                                    enemies = [Figurines.Enemy(random.randrange(0, 440, 5), random.randrange(0, 20)),
-                                               Figurines.Enemy(random.randrange(0, 440, 5), random.randrange(0, 20))]
-                                    selectedEnemy = enemies[1]
-                                    flyingShot = 0
-                                    inputbox = ""
-                                    newWord = "resume"
-                                    score = 0
-                                    bullets.clear()
-                                    pygame.mixer.unpause()
-                                    enter = False
-                                    break
-
-                    clock.tick(60)
-            if enter == False:
-                break
-
-        pygame.draw.rect(screen, (40, 100, 255), (0, 0, 480, 40))
-        words = font.render(newWord, False, 120, (40, 100, 255))  # scoreboard, input, output rendern
-        scorerender = font.render(str(score), False, 120, (40, 100, 255))
-        inputrender = font.render(inputbox, False, 120, (40, 100, 255))
-        liverender = font.render(str(healthpoints), False, 120, (40, 100, 255))
-        screen.blit(words, (3,3))
-        screen.blit(scorerender,(440,3))
-        screen.blit(liverender,(1,454))
-        screen.blit(inputrender,(0,40))
-
-        for event in pygame.event.get():  # Event abfrage,
-
-            if event.type == pygame.QUIT:
-                running = False
-
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    pygame.event.post(pygame.event.Event(pygame.QUIT))
-
-                elif event.key == pygame.K_BACKSPACE and len(inputbox) != 0:
-
-                    inputbox = ""
-
-                else:
-                    pygame.mixer.Sound.play(input)
-                    inputbox += event.unicode
-
-        if inputbox == newWord:
-            if flyingShot != 1 and player.xPos == selectedEnemy.xPos:
-                pygame.mixer.Sound.play(shot)
-                bullets.append(Figurines.Boolet(player.xPos, player.yPos))
-                flyingShot = 1
-                newWord = (giveWord(random.randrange(0, 370100)))
-                inputbox = ""
+        findEnemy(gamestate, screen)
+        hit(gamestate, screen)
+        lives(gamestate, screen)
+        userInterface(gamestate, screen)
+        restofthelogic(gamestate, screen)
 
         pygame.display.flip()
 
