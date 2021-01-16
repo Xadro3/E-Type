@@ -20,7 +20,7 @@ class GameState():
     bullets = []
     selectedEnemy = enemies[1]
     flyingShot = 0
-    healthpoints = 1
+    healthpoints = 10
     score = 0
     spawnrate = 0
     running = True
