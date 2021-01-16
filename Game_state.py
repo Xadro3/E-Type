@@ -6,7 +6,7 @@ import Figurines
 
 
 class GameState():
-    # wir packen alle unseren schönen variablen in eine klasse um sie einfach in der gegen herumschieben können
+    # wir packen alle unseren schönen variablen in eine klasse um sie einfach in der gegend herumschieben können
     pygame.init()
     pygame.mixer.init()
     screen = pygame.display.set_mode((480, 480))
@@ -20,7 +20,7 @@ class GameState():
     bullets = []
     selectedEnemy = enemies[1]
     flyingShot = 0
-    healthpoints = 10
+    healthpoints = 1
     score = 0
     spawnrate = 0
     running = True

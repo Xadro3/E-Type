@@ -27,7 +27,7 @@ class Sprite():
 
     def draw(self, screen, image):
 
-        if type(image) == list:
+        if type(image) == list:         #animationen und statische bilder unterscheiden
 
             if self.cycle + 1 >= 30:
                 self.cycle = 0
@@ -57,7 +57,7 @@ class Sprite():
             pass
 
     def moveRight(self, screen, image):
-        print(self.xPos)
+
         if self.xPos + image[0].get_width() < 480:
             self.xPos = self.xPos + self.velocity
 
@@ -92,7 +92,7 @@ class Player(Sprite):
         super(Player, self).__init__(xPos, yPos, 5)
 
         flyLeft = [loadImage("./Assets/Spaceship links V2.png", (255, 255, 255)),
-                   loadImage("./Assets/Spaceship links V21.png", (255, 255, 255)),
+                   loadImage("./Assets/Spaceship links V21.png", (255, 255, 255)),      #animationen werden durch liste dargestellt und in draw ausgegeben
                    loadImage("./Assets/Spaceship links V22.png", (255, 255, 255))]
         idling = [loadImage("./Assets/Spaceshipidle.png", (255, 255, 255)),
                 loadImage("./Assets/SpaceshipIdle 2.png", (255, 255, 255)),
